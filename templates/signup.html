@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup</title>
+</head>
+<body>
+    <h1> sign up page </h1>
+    <form action="/main" method="POST">
+    <label for="username">Username: </label>
+    <input type="text" name="username" id="username">
+    {{if .}}
+    <br> {{.}}
+    {{end}}
+    <br>
+    <label for="password">Password: </label>
+    <input type="password" name="password" id="password">
+    <br>
+    <label for="fname">first name :</label>
+    <input type="text" name="fname" id="fname">
+    <br>
+    <label for="lname">last name: </label>
+    <input type="text" name="lname" id="lname">
+    <br>
+    <input type="hidden" name="submitType" value="signup">
+    <input type="submit" value="signup">
+
+    <br>
+    </form>
+
+    <p> Already have an account? </p>
+    go to <a href="/">login page</a>
+</body>
+</html>

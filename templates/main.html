@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=, initial-scale=1.0">
+    <title>Profile</title>
+</head>
+<body>
+    {{if .}}
+    <h1> hello {{.Fname}} </h1>
+    <h2> Profile : </h2>
+    <ul>
+        <li> Username: {{.UserName}}</li>
+        <li> First Name : {{.Fname}} </li>
+        <li> Last Name : {{.Lname}} </li>
+    </ul>
+    {{end}}
+    <form action="/bar" method="GET">
+        <input type="submit" value="go to bar">
+    </form>
+
+    <form action="/logout" method="GET">
+        <input type="submit" value="logout">
+    </form>
+    
+</body>
+</html>

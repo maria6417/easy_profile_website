@@ -66,8 +66,9 @@ func addUser(w http.ResponseWriter, r *http.Request) error {
 	}
 	fname := r.FormValue("fname")
 	lname := r.FormValue("lname")
+	admin := r.FormValue("admin") == "on"
 	u1 := user{
-		username, []byte(password), fname, lname,
+		username, []byte(password), fname, lname, admin,
 	}
 	userInfo[username] = u1
 	return err

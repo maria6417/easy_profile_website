@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"io"
 	"net/http"
 )
 
@@ -16,6 +17,7 @@ type user struct {
 	Password []byte
 	Fname    string
 	Lname    string
+	Admin    bool
 }
 
 var sessionMap = map[string]string{} //key: uuid, value: username
@@ -108,6 +110,7 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func bar(w http.ResponseWriter, r *http.Request) {
+	// bar can only be accessed by admins.
 	if !alreadyLoggedIn(w, r) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -115,8 +118,11 @@ func bar(w http.ResponseWriter, r *http.Request) {
 	cookie := getCookie(w, r)
 	currentUserId := sessionMap[cookie.Value]
 	userData := userInfo[currentUserId]
+	if !userData.Admin {
+		io.WriteString(w, "Access Not Permitted. You have to be Administrator to access bar.")
+		return
+	}
 	tpl.ExecuteTemplate(w, "bar.html", userData)
-
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {

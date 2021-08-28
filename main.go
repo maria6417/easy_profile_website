@@ -4,9 +4,11 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"time"
 )
 
 var tpl *template.Template
+var dbSessionsCleaned time.Time
 
 func init() {
 	tpl = template.Must(template.ParseGlob("templates/*"))
@@ -20,8 +22,13 @@ type user struct {
 	Admin    bool
 }
 
-var sessionMap = map[string]string{} //key: uuid, value: username
-var userInfo = map[string]user{}     //key: username, value: userinfo
+type session struct {
+	UserName     string
+	LastActivity time.Time
+}
+
+var sessionMap = map[string]session{} //key: uuid, value: session(username, lastactivity)
+var userInfo = map[string]user{}      //key: username, value: userinfo
 
 func main() {
 	http.HandleFunc("/", index)
@@ -60,6 +67,12 @@ func signup(w http.ResponseWriter, r *http.Request) {
 }
 
 func mainPage(w http.ResponseWriter, r *http.Request) {
+
+	// cleaning up dbsessions
+	if time.Now().Sub(dbSessionsCleaned) > (time.Second * 30) {
+		go cleanSessions()
+	}
+
 	cookie := getCookie(w, r)
 	submitType := r.FormValue("submitType")
 	if r.Method == http.MethodPost && submitType == "login" {
@@ -74,7 +87,9 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 		}
 		// register sessionId to sessionMap form value to userInfo
 		username := r.FormValue("username")
-		sessionMap[cookie.Value] = username
+		lastActivity := time.Now()
+		sessionMap[cookie.Value] = session{UserName: username, LastActivity: lastActivity}
+
 	}
 	if r.Method == http.MethodPost && submitType == "signup" {
 		// check is username is already taken
@@ -93,14 +108,15 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		username := r.FormValue("username")
-		sessionMap[cookie.Value] = username
+		lastActivity := time.Now()
+		sessionMap[cookie.Value] = session{UserName: username, LastActivity: lastActivity}
 	}
 
 	if !alreadyLoggedIn(w, r) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	username := sessionMap[cookie.Value]
+	username := sessionMap[cookie.Value].UserName
 	userData := userInfo[username]
 	err := tpl.ExecuteTemplate(w, "main.html", userData)
 	if err != nil {
@@ -116,7 +132,7 @@ func bar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cookie := getCookie(w, r)
-	currentUserId := sessionMap[cookie.Value]
+	currentUserId := sessionMap[cookie.Value].UserName
 	userData := userInfo[currentUserId]
 	if !userData.Admin {
 		io.WriteString(w, "Access Not Permitted. You have to be Administrator to access bar.")

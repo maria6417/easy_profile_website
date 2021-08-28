@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -12,8 +14,9 @@ func getCookie(w http.ResponseWriter, r *http.Request) *http.Cookie {
 	if err == http.ErrNoCookie {
 		uuid := uuid.NewV4()
 		c = &http.Cookie{
-			Name:  "session",
-			Value: uuid.String(),
+			Name:    "session",
+			Value:   uuid.String(),
+			Expires: time.Now().Add(time.Minute * 1),
 		}
 		http.SetCookie(w, c)
 	}
@@ -23,8 +26,8 @@ func getCookie(w http.ResponseWriter, r *http.Request) *http.Cookie {
 func alreadyLoggedIn(w http.ResponseWriter, r *http.Request) bool {
 	cookie := getCookie(w, r)
 	uuid := cookie.Value
-	currentUserId := sessionMap[uuid]
-	if currentUserId == "" {
+	sessionUser := sessionMap[uuid]
+	if sessionUser.UserName == "" {
 		return false
 	} else {
 		return true
@@ -82,4 +85,24 @@ func hashPassword(password string) ([]byte, error) {
 func checkPasswordHash(password, hash []byte) bool {
 	err := bcrypt.CompareHashAndPassword(hash, password)
 	return err == nil
+}
+
+func cleanSessions() {
+	showSessions()
+	for k, v := range sessionMap {
+		if time.Now().Sub(v.LastActivity) > (time.Second*30) || v.UserName == "" {
+			delete(sessionMap, k)
+		}
+	}
+
+	dbSessionsCleaned = time.Now()
+	fmt.Println("after cleaned ... ")
+	showSessions()
+
+}
+
+func showSessions() {
+	for k, v := range sessionMap {
+		fmt.Println("sessions : ", k, v)
+	}
 }
